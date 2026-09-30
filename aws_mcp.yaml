@@ -38,7 +38,7 @@ icon: https://avatars.githubusercontent.com/u/3299148?s=48&v=4
 repoURL: https://docs.aws.amazon.com/agent-toolkit/latest/userguide/getting-started-aws-mcp-server.html
 runtime: remote
 remoteConfig:
-  fixedURL: https://aws-mcp.us-east-1.api.aws/mcp?oauth=initialize
+  fixedURL: https://aws-mcp.us-east-1.api.aws/mcp
 toolPreview:
   # AWS API tools
   - name: aws___run_script
