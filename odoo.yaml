@@ -1,0 +1,169 @@
+name: Odoo
+entryKey: ablv-odoo
+serverUserType: singleUser
+shortDescription: Access and manage Odoo ERP data including customers, sales, inventory, invoices, and projects
+description: |
+  A Model Context Protocol (MCP) server that enables AI assistants to interact with Odoo ERP systems. Access business data, search records, create new entries, update existing data, and manage your Odoo instance through natural language.
+
+  ## Features
+  - **Search & Retrieve**: Find any Odoo record (customers, products, invoices, etc.) with smart field selection
+  - **Create Records**: Add new entries with field validation and permission checks
+  - **Update Records**: Modify existing data with smart field handling
+  - **Delete Records**: Remove records respecting model-level permissions
+  - **Count & Aggregate**: Count records and perform server-side grouping, sums, and counts without pulling raw rows
+  - **Workflow Actions**: Invoke any public Odoo method (post invoice, confirm SO, etc.) via an opt-in escape hatch
+  - **Model Inspection**: Inspect model fields to understand data structure
+  - **Smart Pagination**: Automatic pagination for large datasets
+  - **LLM-Optimized Output**: Hierarchical text formatting designed for AI consumption
+  - **Multi-Language Support**: Get responses in your preferred language
+
+  ## What you'll need to connect
+
+  **Required:**
+  - **Odoo URL**: Your Odoo instance URL (e.g., https://mycompany.odoo.com)
+  - **Authentication**: Either an Odoo API key (recommended) or username + password
+
+  **To generate an API key:**
+  1. Go to Settings > Users & Companies > Users
+  2. Select your user
+  3. Under the "API Keys" tab, create a new key
+
+  **Optional:**
+  - **Database Name**: Auto-detected if not set, required if database listing is restricted on your server
+  - **Locale**: Language for Odoo responses (e.g., es_ES, fr_FR)
+  - **YOLO Mode**: Bypasses the MCP module requirement for quick testing. Set to `read` for read-only access or `true` for full CRUD (development only, never use in production)
+  - **Enable Method Calls**: Enables the `call_model_method` tool for workflow actions. Requires YOLO mode set to `true`
+
+  **Operating Modes:**
+  - **Standard mode** (production): Requires Odoo 16.0+ with the [MCP module](https://apps.odoo.com/apps/modules/19.0/mcp_server) installed. Provides access controls and model restrictions.
+  - **YOLO read-only mode** (`ODOO_YOLO=read`): Works with any Odoo instance, allows search/read operations only. Safe for demos.
+  - **YOLO full access mode** (`ODOO_YOLO=true`): Works with any Odoo instance, allows all operations. Development/testing only.
+
+  ## Examples
+  - "Show me all customers from Spain"
+  - "Find products with stock below 10 units"
+  - "Create a new customer contact for Acme Corporation"
+  - "List today's sales orders over $1000"
+  - "Count how many active employees we have"
+  - "Update the phone number for customer John Doe"
+
+metadata:
+  categories: Business, SaaS & API Integrations
+  allow-multiple: "true"
+icon: https://avatars.githubusercontent.com/u/6368483?s=200&v=4
+repoURL: https://github.com/ivnvxd/mcp-server-odoo
+env:
+- key: ODOO_URL
+  name: Odoo URL
+  required: true
+  sensitive: false
+  description: Your Odoo instance URL (e.g., https://mycompany.odoo.com)
+- key: ODOO_API_KEY
+  name: Odoo API Key
+  required: false
+  sensitive: true
+  description: API key for authentication (recommended). Alternatively, provide username and password instead.
+- key: ODOO_USER
+  name: Odoo Username
+  required: false
+  sensitive: false
+  description: Username for authentication (alternative to API key)
+- key: ODOO_PASSWORD
+  name: Odoo Password
+  required: false
+  sensitive: true
+  description: Password for authentication (if not using API key)
+- key: ODOO_DB
+  name: Odoo Database
+  required: false
+  sensitive: false
+  description: Database name. Auto-detected if not set, but required if database listing is restricted on your server.
+- key: ODOO_LOCALE
+  name: Odoo Locale
+  required: false
+  sensitive: false
+  description: Language/locale for Odoo responses (e.g., es_ES, fr_FR, de_DE)
+- key: ODOO_YOLO
+  name: YOLO Mode
+  required: false
+  sensitive: false
+  description: "Bypass MCP module requirement. Values: off (default, requires MCP module), read (read-only access without module), true (full CRUD without module — development only)"
+- key: ODOO_MCP_ENABLE_METHOD_CALLS
+  name: Enable Method Calls
+  required: false
+  sensitive: false
+  description: "Enable the call_model_method tool for workflow actions. Requires ODOO_YOLO=true. Values: false (default), true"
+
+runtime: containerized
+containerizedConfig:
+  image: ghcr.io/ivnvxd/mcp-server-odoo:0.7.1
+  port: 8000
+  path: /mcp/
+  args:
+  - --transport
+  - streamable-http
+  - --host
+  - 0.0.0.0
+  - --port
+  - "8000"
+toolPreview:
+- name: search_records
+  description: Search for records in any Odoo model with filters, smart field selection, and pagination.
+  params:
+    model: "Odoo model name (e.g., res.partner, product.product, sale.order)"
+    domain: "Search filter as a list of conditions (e.g., [[\"is_company\", \"=\", true]])"
+    fields: "List of fields to return. Omit for smart selection, use [\"__all__\"] for all fields. (optional)"
+    limit: "Maximum number of records to return (optional, default 10)"
+    offset: "Number of records to skip for pagination (optional)"
+- name: get_record
+  description: Retrieve a specific record by ID with optional field selection.
+  params:
+    model: "Odoo model name (e.g., res.partner, product.product)"
+    record_id: "The numeric ID of the record to retrieve"
+    fields: "List of fields to return. Omit for smart selection. (optional)"
+- name: create_record
+  description: Create a new record in any Odoo model with field validation and permission checks.
+  params:
+    model: "Odoo model name (e.g., res.partner, product.product)"
+    values: "Dictionary of field names and values for the new record"
+- name: update_record
+  description: Update an existing record with smart field handling.
+  params:
+    model: "Odoo model name (e.g., res.partner)"
+    record_id: "The numeric ID of the record to update"
+    values: "Dictionary of field names and new values"
+- name: delete_record
+  description: Delete a record from Odoo respecting model-level permissions.
+  params:
+    model: "Odoo model name (e.g., res.partner)"
+    record_id: "The numeric ID of the record to delete"
+- name: list_models
+  description: List all models enabled for MCP access in the Odoo instance.
+  params: {}
+- name: list_resource_templates
+  description: List available resource URI templates and their patterns for direct access to Odoo data.
+  params: {}
+- name: aggregate_records
+  description: Server-side aggregation with grouping, sums, and counts. Pushes work to PostgreSQL instead of pulling raw rows.
+  params:
+    model: "Odoo model name (e.g., sale.order, res.partner)"
+    groupby: "List of fields to group by (e.g., [\"date_order:month\", \"state\"])"
+    aggregates: "List of aggregations (e.g., [\"amount_total:sum\"]). Defaults to [\"__count\"]. (optional)"
+    domain: "Search filter as a list of conditions (optional)"
+- name: post_message
+  description: Post a message to a record's chatter (mail.thread). Supports internal notes and follower notifications.
+  params:
+    model: "Odoo model name (e.g., res.partner, sale.order)"
+    record_id: "The numeric ID of the record to post to"
+    body: "Message content (plain text or HTML)"
+    subtype: "Message type: 'note' for internal log (default), 'comment' to notify followers (optional)"
+    body_is_html: "Set to true if body contains HTML markup (optional)"
+    partner_ids: "List of partner IDs to notify (optional)"
+    attachment_ids: "List of attachment IDs to include (optional)"
+- name: call_model_method
+  description: Generic escape hatch to invoke any public Odoo method for workflow actions not covered by CRUD. Only available when YOLO mode and method calls are enabled.
+  params:
+    model: "Odoo model name (e.g., account.move, sale.order)"
+    method: "Public method name to invoke (e.g., action_post, action_confirm)"
+    arguments: "Positional arguments as a list (e.g., [[42]] for record IDs)"
+    keyword_arguments: "Keyword arguments as a dictionary (optional)"

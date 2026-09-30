@@ -1,0 +1,68 @@
+name: AWS MCP
+entryKey: ablv-aws-mcp
+serverUserType: singleUser
+shortDescription: Run AWS operations, read AWS documentation, and check regional availability
+description: |
+  Run AWS operations through a sandboxed Python environment, retrieve AWS skills and
+  task guidance, generate presigned S3 URLs, search and read AWS documentation, and
+  check service availability by Region through the AWS-managed remote AWS MCP Server.
+  See the official
+  [AWS MCP Server setup guide](https://docs.aws.amazon.com/agent-toolkit/latest/userguide/getting-started-aws-mcp-server.html)
+  for endpoints, tool reference, and authentication details.
+
+  ## Features
+  - **Scripted AWS API access**: Run Python against the AWS APIs in a sandbox for
+    resource listing, parallel calls, cross-service checks, and multi-step workflows
+  - **Long-running tasks**: Poll status for scripts that return a working state
+  - **Presigned S3 URLs**: Generate upload and download URLs for direct S3 transfers
+  - **AWS skills**: Retrieve domain-specific workflows, best practices, and procedures
+  - **Documentation search and read**: Search all AWS documentation and convert pages to markdown
+  - **Regional availability**: Check services, features, SDK APIs, and CloudFormation
+    resources by Region
+
+  ## What you'll need to connect
+
+  **Sign in with AWS**: Authentication uses OAuth 2.1 through AWS Sign-In. This remote
+  entry does not require AWS access-key environment variables. The IAM principal needs
+  `signin:AuthorizeOAuth2Access` and `signin:CreateOAuth2Token`, available through the
+  AWS managed policy `AWSMCPSignInOAuthAccessPolicy`.
+
+  Tools act only within the permissions the signed-in identity already has.
+
+  **Note**: This server supersedes the AWS API MCP Server. Avoid deploying both into the
+  same project, since overlapping tools can confuse agents. Multi-account profile
+  switching and read-only tool filtering are not available on this remote path.
+metadata:
+  categories: Infrastructure,Cloud Services,DevOps
+icon: https://avatars.githubusercontent.com/u/3299148?s=48&v=4
+repoURL: https://docs.aws.amazon.com/agent-toolkit/latest/userguide/getting-started-aws-mcp-server.html
+runtime: remote
+remoteConfig:
+  fixedURL: https://aws-mcp.us-east-1.api.aws/mcp
+toolPreview:
+  # AWS API tools
+  - name: aws___run_script
+    description: Execute Python code in a sandboxed environment with AWS API access for resource listing, parallel calls, multi-step workflows, and retry logic.
+    params: {}
+  - name: aws___get_presigned_url
+    description: Generate presigned Amazon S3 URLs for uploading or downloading files.
+    params: {}
+  - name: aws___get_tasks
+    description: Poll the status of long-running tasks started by aws___run_script.
+    params: {}
+  # AWS Knowledge tools
+  - name: aws___retrieve_skill
+    description: Retrieve domain-specific AWS expertise including workflows, best practices, decision frameworks, and step-by-step procedures.
+    params: {}
+  - name: aws___search_documentation
+    description: Search across all AWS documentation including API references, best practices, service guides, and skills.
+    params: {}
+  - name: aws___read_documentation
+    description: Retrieve an AWS documentation page and convert it to markdown.
+    params: {}
+  - name: aws___list_regions
+    description: Retrieve all AWS Regions with their identifiers and names.
+    params: {}
+  - name: aws___get_regional_availability
+    description: Check AWS regional availability for services, features, SDK APIs, and CloudFormation resources.
+    params: {}

@@ -1,0 +1,142 @@
+name: SQL Sandbox
+entryKey: ablv-sql-sandbox
+serverUserType: singleUser
+shortDescription: Test MCP with dummy employees/sales SQL — for SQL Guard and custom OAuth testing
+description: |
+  Internal **test MCP server** with in-memory dummy `employees` and `sales` tables.
+  Use it to validate SQL filters (SQL Guard, Abluva Breach Filter) and authentication flows
+  without connecting to a real database.
+
+  ## Features
+  - **run_sql** / **run_query** — read-only SELECT against dummy data
+  - **list_tables** / **describe_table** — schema introspection
+  - **Dual MCP stack** — legacy session mode and MCP `2026-07-28` stateless on the same port
+  - **Auth modes** (server-side via `AUTH_MODE` env on deploy):
+    - `none` — open (default)
+    - `bearer` — static PAT via `Authorization: Bearer`
+    - `github` — validates Bearer token against GitHub API (`GET /user`)
+
+  ## Authentication (choose at launch)
+
+  | Mode | Use case |
+  |------|----------|
+  | **Personal Access Token** | Shared static bearer for the deployment (simple filter/PAT testing) |
+  | **Custom OAuth App (GitHub)** | Register your own GitHub OAuth App; Hub brokers per-user OAuth and forwards the GitHub access token to this server |
+
+  For **Custom OAuth**, register a GitHub OAuth App (see catalog `oauthDefaults`) and set the
+  Authorization callback URL to your Hub broker callback (Phase 2):
+  `https://hub.abluva.com/api/v1/hub/mcp/custom-oauth/callback`
+
+  Deploy server with `AUTH_MODE=github` so the MCP endpoint requires a valid GitHub access token.
+
+metadata:
+  categories: Developer Tools
+  allow-multiple: "true"
+  # No vendorIdentity — custom OAuth uses GitHub identity only for gatekeeping, not assignment binding.
+  authMechanisms: |
+    [
+      {
+        "value": "pat",
+        "label": "Personal Access Token",
+        "description": "Shared static bearer token for this deployment (no per-user OAuth). Set AUTH_MODE=bearer on the server.",
+        "requiresVendorIdentity": false,
+        "headers": [
+          {
+            "name": "Access Token",
+            "key": "Authorization",
+            "required": true,
+            "sensitive": true,
+            "prefix": "Bearer ",
+            "description": "Static bearer token configured at launch (must match STATIC_BEARER_TOKEN when pinned)"
+          }
+        ]
+      },
+      {
+        "value": "custom_oauth",
+        "label": "Custom OAuth App (GitHub)",
+        "description": "Use your own GitHub OAuth App. Users sign in with GitHub; Hub exchanges tokens and forwards them to SQL Sandbox.",
+        "requiresVendorIdentity": false,
+        "oauthProvider": "github",
+        "oauthDefaults": {
+          "authorize_url": "https://github.com/login/oauth/authorize",
+          "token_url": "https://github.com/login/oauth/access_token",
+          "refresh_url": "https://github.com/login/oauth/access_token",
+          "scopes": "read:user user:email",
+          "redirect_uri_hint": "https://hub.abluva.com/api/v1/hub/mcp/custom-oauth/callback"
+        },
+        "oauthFields": [
+          {
+            "key": "client_id",
+            "label": "Client ID",
+            "required": true,
+            "sensitive": false,
+            "placeholder": "Provide the client (app) ID from GitHub Developer Settings"
+          },
+          {
+            "key": "client_secret",
+            "label": "Client Secret",
+            "required": true,
+            "sensitive": true,
+            "placeholder": "Enter your client secret"
+          },
+          {
+            "key": "authorize_url",
+            "label": "Authorization URL",
+            "required": true,
+            "sensitive": false,
+            "default": "https://github.com/login/oauth/authorize"
+          },
+          {
+            "key": "token_url",
+            "label": "Token URL",
+            "required": true,
+            "sensitive": false,
+            "default": "https://github.com/login/oauth/access_token"
+          },
+          {
+            "key": "refresh_url",
+            "label": "Refresh URL",
+            "required": false,
+            "sensitive": false,
+            "default": "https://github.com/login/oauth/access_token"
+          },
+          {
+            "key": "scopes",
+            "label": "Scopes",
+            "required": false,
+            "sensitive": false,
+            "default": "read:user user:email",
+            "description": "Space-separated GitHub OAuth scopes"
+          }
+        ]
+      }
+    ]
+icon: https://img.icons8.com/fluency/96/sql.png
+repoURL: https://github.com/abluva-research/secure-ai-plane-x/tree/main/test-mcp-servers/sql-sandbox
+runtime: remote
+remoteConfig:
+  # PROD github-runner internal URL — Obot requires fixedURL, hostname, or urlTemplate (empty hostname fails sync).
+  fixedURL: http://10.0.11.24:8095/mcp
+  headers:
+    - name: Access Token
+      key: Authorization
+      required: false
+      sensitive: true
+      prefix: "Bearer "
+      description: Bearer token (PAT at launch, or GitHub access token after custom OAuth)
+toolPreview:
+  - name: run_sql
+    description: Execute a read-only SQL query against dummy employees and sales tables
+    params:
+      sql: SQL SELECT statement
+  - name: run_query
+    description: Alias of run_sql for Toolbox-style clients
+    params:
+      query: SQL SELECT statement
+  - name: list_tables
+    description: List available dummy tables (employees, sales)
+    params: {}
+  - name: describe_table
+    description: Describe columns for a dummy table
+    params:
+      table_name: Table name (employees or sales)
